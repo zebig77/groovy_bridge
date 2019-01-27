@@ -4,6 +4,15 @@ import junit.framework.TestCase
 
 class TestBridge extends TestCase {
 
+    void testValHonneurs() {
+        assert Couleur.val_honneur("A") == 4
+        assert Couleur.val_honneur("R") == 3
+        assert Couleur.val_honneur("D") == 2
+        assert Couleur.val_honneur("V") == 1
+        assert Couleur.val_honneur("10") == 0
+        assert Couleur.val_honneur("2") == 0
+    }
+
     void testNewHand() {
         def m = new Main("A", "D 10 8 6 2", "R V 3", "10 9 8 4")
         println m

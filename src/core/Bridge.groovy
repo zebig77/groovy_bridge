@@ -3,14 +3,7 @@ package core
 /** Toutes les cartes d'une même couleur */
 class Couleur {
     def cartes = []
-    static cartes_valides = ["A", "R", "D", "V"]
-    static points_honneur = ["A":4, 'R':3, 'D':2, 'V':1]
-    static {
-        (10..2).each {
-            cartes_valides << it.toString()
-            points_honneur[it.toString()] = 0
-        }
-    }
+    static cartes_valides = ["A", "R", "D", "V", "10"] + ("9".."2")
 
     // constructeur avec couleur structurée comme par ex "A R V 2"
     Couleur(String lc) {
@@ -28,9 +21,19 @@ class Couleur {
         return cartes.size()
     }
 
+    static int val_honneur(String c) {
+        switch (c) {
+            case 'A': return 4;
+            case 'R': return 3;
+            case 'D': return 2;
+            case 'V': return 1;
+        }
+        return 0
+    }
+
     int pointsH() {
         if (cartes.size() == 0) { return 0 }
-        return cartes.collect( {c-> points_honneur[c]} ).sum()
+        return cartes.collect( { val_honneur(it) } ).sum()
     }
 
     String toString() {
@@ -38,7 +41,7 @@ class Couleur {
     }
 
     List<String> honneurs() {
-        return cartes.findAll { points_honneur[it] > 0 }
+        return cartes.findAll { val_honneur(it) > 0 }
     }
 }
 
@@ -79,8 +82,16 @@ ${if (this.main_bicolore()) {"Main bicolore"} else {"Main non-bicolore"}}
         return couleurs*.pointsH().sum()
     }
 
+    boolean H_entre(int min, int max) {
+        return pointsH() >= min && pointsH() <= max
+    }
+
     int pointsDH() {
         return pointsD()+pointsH()
+    }
+
+    boolean DH_entre(int min, int max) {
+        return pointsDH() >= min && pointsDH() <= max
     }
 
     int pointsD() {
@@ -100,6 +111,16 @@ ${if (this.main_bicolore()) {"Main bicolore"} else {"Main non-bicolore"}}
                     case 10: d+= 1; break
                     case 11: d+= 2; break
                     case 12: d+= 3; break
+                }
+            }
+        }
+        // honneurs secs < AS => réduire les points D
+        couleurs.each {
+            if (it.size() == 1) {
+                switch (it.cartes[0]) {
+                    case 'R': d -= 2; break // enlever 2 points
+                    case 'D': d -= 2; break // enlever 2 points
+                    case 'V': d -= 1; break // enlever 1 point
                 }
             }
         }
@@ -146,15 +167,74 @@ ${if (this.main_bicolore()) {"Main bicolore"} else {"Main non-bicolore"}}
             return "1 SA"
         }
 
-        // 1 P
-        if (Piques.size() >= 5 && Piques.size() >= Coeurs.size() && pointsDH() < 20) {
+        // 1 Pique
+        if (Piques.size() >= 5
+                && Coeurs.size() < 7
+                && Trêfles.size() < 5
+                && pointsDH() <= 19) {
             return "1 P"
         }
 
-        // 1 C
-        if (Coeurs.size() >= 5 && pointsDH() < 20) {
+        // 1 Coeur
+        if (Coeurs.size() >= 5 && pointsDH() <= 19) {
             return "1 C"
         }
+
+        // 1 Carreau
+        if (Carreaux.size() >= 4
+                && Carreaux.size() >= Trêfles.size()
+                && pointsDH() <= 19) {
+            return "1 K"
+        }
+
+        // 1 Carreau cas particulier distrib 4432 (jeu tricolore)
+        def distrib = couleurs*.size()
+        if (distrib == [4,4,3,2]) {
+            return "1 K"
+        }
+
+        // 1 Trèfle
+        if (Carreaux.size() == 3
+                && Trêfles.size() == 3
+                && pointsDH() <= 19) {
+            return "1 T"
+        }
+
+        // 1 Trèfle conventionnel pour faciliter les enchères
+        if (Piques.size() == 5
+                && Trêfles.size() >= 5
+                && pointsDH() <= 19) {
+            return "1 T"
+        }
+
+        // 2 SA
+        if (main_régulière() && H_entre(21,22)) {
+            return "2 SA"
+        }
+
+        // 2 Pique
+        if (Piques.size() >= 5
+                && Piques.pointsH() >= 6
+                && DH_entre(20,23)) {
+            return "2 P"
+        }
+
+        // 2 Coeur
+        if (Coeurs.size() >= 5
+                && Coeurs.pointsH() >= 6
+                && DH_entre(20,23)) {
+            return "2 C"
+        }
+
+        // 2 Carreau
+        if (Carreaux.size() >= 5
+                && Carreaux.pointsH() >= 6
+                && DH_entre(20,23)) {
+            return "2 K"
+        }
+
+        // 2 Trèfle conventionnel
+
 
         return "Je sais pas"
     }
