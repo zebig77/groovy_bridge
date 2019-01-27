@@ -13,6 +13,6 @@ all.each { liste ->
     def big1 = liste.sort { -it }[0]
     def big2 = liste.sort { -it }[1]
     boolean bicolore = ((big1 == 6 && big2 >= 4) || (big1 == 5 && big2 == 5))
-    println " big1 = $big1 big2 = $big2 bicolore : $bicolore"
+    println " big1 = $big1 big2 = $big2 main_bicolore : $bicolore"
 
 }

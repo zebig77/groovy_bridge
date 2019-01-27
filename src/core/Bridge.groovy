@@ -67,7 +67,7 @@ Carreaux $Carreaux
 Trêfles  $Trêfles
 ${this.pointsH()} points d'honneur
 ${this.pointsD()} points de distribution
-${if (this.bicolore()) {"Main bicolore"} else {"Main non-bicolore"}}
+${if (this.main_bicolore()) {"Main bicolore"} else {"Main non-bicolore"}}
 """
     }
 
@@ -93,7 +93,7 @@ ${if (this.bicolore()) {"Main bicolore"} else {"Main non-bicolore"}}
                 case 6..13: d += (it.size()-5); break // +1D à partir de la 6ème
             }
         }
-        if (bicolore()) {
+        if (main_bicolore()) {
             if ((longue1().honneurs().size() >= 2)
                   && (longue2()?.honneurs()?.size() >= 2)) {
                 switch(longue1().size()+longue2().size()) {
@@ -122,10 +122,41 @@ ${if (this.bicolore()) {"Main bicolore"} else {"Main non-bicolore"}}
     }
 
     // distributions 5-5-X-X, 6-4-X-X, 6-5-X-X, 6-6-X-X
-    boolean bicolore() {
+    boolean main_bicolore() {
         def big1 = couleurs*.size().sort { -it }[0] // plus longue
         def big2 = couleurs*.size().sort { -it }[1] // 2ème plus longue
         return (big1 == 6 && big2 >= 4) || (big1 == 5 && big2 == 5)
+    }
+
+    // distributions 4-3-3-3, 4-4-3-2, 5-3-3-2
+    boolean main_régulière() {
+        def distrib = couleurs*.size().sort { -it }
+        if (distrib == [4,3,3,3]) { return true }
+        if (distrib == [4,4,3,2]) { return true }
+        if (distrib == [5,3,3,2]) { return true }
+        return false
+    }
+
+    String ouverture() {
+        if (pointsH() < 13) { return "Passe" }
+        if (pointsDH() < 14) { return "Passe" }
+
+        // 1 SA
+        if (main_régulière() && pointsH() >= 16 && pointsH() <= 18) {
+            return "1 SA"
+        }
+
+        // 1 P
+        if (Piques.size() >= 5 && Piques.size() >= Coeurs.size() && pointsDH() < 20) {
+            return "1 P"
+        }
+
+        // 1 C
+        if (Coeurs.size() >= 5 && pointsDH() < 20) {
+            return "1 C"
+        }
+
+        return "Je sais pas"
     }
 }
 
