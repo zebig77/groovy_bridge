@@ -34,6 +34,7 @@ class TestOuvertures extends TestCase {
         }
     }
 
+    // 20DH et couleur 6ème avec gros honneurs
     void test6_2P() {
         new Main("A D 9 8 6 2", "A R 4", "A 10 2", "3").with {
             assert ouverture() == "2 P"
@@ -51,6 +52,13 @@ class TestOuvertures extends TestCase {
     void test8_1SA() {
         new Main("R 8", "D 10 7 4 2", "A D 10", "R D V").with {
             assert ouverture() == "1 SA"
+        }
+    }
+
+    // 26DH => 2T
+    void test9_2T() {
+        new Main("7", "A R D 10 8 7", "A R D 10", "A 4").with {
+            assert ouverture() == "2 T"
         }
     }
 
