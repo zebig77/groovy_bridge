@@ -3,7 +3,7 @@ package core
 /** Toutes les cartes d'une même couleur */
 class Couleur {
     def cartes = []
-    static cartes_valides = ["A", "R", "D", "V", "10"] + ("9".."2")
+    static final cartes_valides = ["A", "R", "D", "V", "10"] + ("9".."2")
 
     // constructeur avec couleur structurée comme par ex "A R V 2"
     Couleur(String lc) {
@@ -23,10 +23,10 @@ class Couleur {
 
     static int val_honneur(String c) {
         switch (c) {
-            case 'A': return 4;
-            case 'R': return 3;
-            case 'D': return 2;
-            case 'V': return 1;
+            case 'A': return 4
+            case 'R': return 3
+            case 'D': return 2
+            case 'V': return 1
         }
         return 0
     }
@@ -43,6 +43,20 @@ class Couleur {
     List<String> honneurs() {
         return cartes.findAll { val_honneur(it) > 0 }
     }
+
+    boolean un_as() {
+        cartes.contains("A")
+    }
+
+    // TODO demander définition à un expert
+    boolean robuste() {
+        // en attendant longue avec AS ou 3 honneurs
+        if (size() >= 5 // au moins 5 cartes
+                && (un_as() || honneurs().size() >= 3)) {
+            return true
+        }
+        return false
+    }
 }
 
 /** Main d'un joueur */
@@ -53,6 +67,7 @@ class Main {
     Couleur Carreaux
     Couleur Trêfles
     List<Couleur> couleurs
+    def distrib = [] // exemple 5-5-2-1
 
     Main(String p, String c, String k, String t) {
         Piques = new Couleur(p)
@@ -60,6 +75,7 @@ class Main {
         Carreaux = new Couleur(k)
         Trêfles = new Couleur(t)
         couleurs = [Piques, Coeurs, Carreaux, Trêfles]
+        distrib = couleurs*.size().sort { -it }
     }
 
     String toString() {
@@ -144,14 +160,20 @@ ${if (this.main_bicolore()) {"Main bicolore"} else {"Main non-bicolore"}}
 
     // distributions 5-5-X-X, 6-4-X-X, 6-5-X-X, 6-6-X-X
     boolean main_bicolore() {
-        def big1 = couleurs*.size().sort { -it }[0] // plus longue
-        def big2 = couleurs*.size().sort { -it }[1] // 2ème plus longue
+        def big1 = distrib[0]
+        def big2 = distrib[1]
         return (big1 == 6 && big2 >= 4) || (big1 == 5 && big2 == 5)
+    }
+
+    // distributions 6-6-X-X, 6-5-X-X, 5-5-X-X
+    boolean main_bicolore_complète() {
+        def big1 = distrib[0]
+        def big2 = distrib[1]
+        return (big1 >= 5 && big2 >= 5)
     }
 
     // distributions 4-3-3-3, 4-4-3-2, 5-3-3-2
     boolean main_régulière() {
-        def distrib = couleurs*.size().sort { -it }
         if (distrib == [4,3,3,3]) { return true }
         if (distrib == [4,4,3,2]) { return true }
         if (distrib == [5,3,3,2]) { return true }
@@ -159,11 +181,12 @@ ${if (this.main_bicolore()) {"Main bicolore"} else {"Main non-bicolore"}}
     }
 
     String ouverture() {
-        if (pointsH() < 13) { return "Passe" }
-        if (pointsDH() < 14) { return "Passe" }
+        if (pointsH() < 13 && pointsDH() < 14) {
+            return "Passe"
+        }
 
         // 1 SA
-        if (main_régulière() && pointsH() >= 16 && pointsH() <= 18) {
+        if (main_régulière() && H_entre(16,18)) {
             return "1 SA"
         }
 
@@ -188,7 +211,6 @@ ${if (this.main_bicolore()) {"Main bicolore"} else {"Main non-bicolore"}}
         }
 
         // 1 Carreau cas particulier distrib 4432 (jeu tricolore)
-        def distrib = couleurs*.size()
         if (distrib == [4,4,3,2]) {
             return "1 K"
         }
@@ -216,6 +238,13 @@ ${if (this.main_bicolore()) {"Main bicolore"} else {"Main non-bicolore"}}
         if (Piques.size() >= 5
                 && Piques.pointsH() >= 6
                 && DH_entre(20,23)) {
+            // cas d'exclusions
+            if (!Piques.robuste()) {
+                return "1 P"    // Pique pas assez robuste
+            }
+            if (main_bicolore_complète()) {
+                return "1 P"    // Autre couleur au moins 5ème
+            }
             return "2 P"
         }
 
@@ -223,6 +252,13 @@ ${if (this.main_bicolore()) {"Main bicolore"} else {"Main non-bicolore"}}
         if (Coeurs.size() >= 5
                 && Coeurs.pointsH() >= 6
                 && DH_entre(20,23)) {
+            // cas d'exclusions
+            if (!Coeurs.robuste()) {
+                return "1 C"    // Pique pas assez robuste
+            }
+            if (main_bicolore_complète()) {
+                return "1 C"    // Autre couleur au moins 5ème
+            }
             return "2 C"
         }
 
@@ -230,11 +266,27 @@ ${if (this.main_bicolore()) {"Main bicolore"} else {"Main non-bicolore"}}
         if (Carreaux.size() >= 5
                 && Carreaux.pointsH() >= 6
                 && DH_entre(20,23)) {
+            // cas d'exclusions
+            if (Carreaux.robuste() == false) {
+                return "1 K"    // Pique pas assez robuste
+            }
+            if (main_bicolore_complète()) {
+                return "1 K"    // Autre couleur au moins 5ème
+            }
+
             return "2 K"
         }
 
-        // 2 Trèfle conventionnel
+        // 1 Trèfle cas particulier Trèfle fort
+        if (Trêfles.size() >= 5
+                && DH_entre(20,23)) {
+            return "1 T"
+        }
 
+        // 2 Trèfle conventionnel
+        if (pointsDH() >= 24 || pointsH() >= 23) {
+            return "2 T"
+        }
 
         return "Je sais pas"
     }

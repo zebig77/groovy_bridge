@@ -40,4 +40,18 @@ class TestOuvertures extends TestCase {
         }
     }
 
+    // 15DH et longue à Pique
+    void test7_1P() {
+        new Main("A V 9 8 6", "3", "A V 7 6 5 2", "4").with {
+            assert ouverture() == "1 P"
+        }
+    }
+
+    // 17H longue peu robuste
+    void test8_1SA() {
+        new Main("R 8", "D 10 7 4 2", "A D 10", "R D V").with {
+            assert ouverture() == "1 SA"
+        }
+    }
+
 }
